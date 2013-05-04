@@ -23,19 +23,27 @@ spi.open(0,0)
 regDC=1
 regPWM=0
 
-def buildvalue(values):
+def buildvalue(values, register):
 
-	# need to convert values in port order (0->16) into byte order lsb first (16->0)
+	# need to convert values in port order (0->16) into byte order MSB first (16->0)
 	
 	bitstream=[]
 	out=[]
 	
+	if register==regDC:
+		reglength=6
+	elif register==regPWM:
+		reglength=12
+	else:
+		print "error unrecognised register"
+		return []
+		
 
 	# for every element in array 
 	for output in range(len(values)):
 		print str(output) + " = " + str(values[output])
 		print bin(values[output])
-		for char in bin(values[output])[2:].zfill(6)[::-1]:
+		for char in bin(values[output])[2:].zfill(reglength)[::-1]:
 			if char=="1":
 				bitstream.append(1)
 			elif char =="0":
@@ -53,17 +61,12 @@ def buildvalue(values):
 	print out
 	return out			
 				
-			
-	
-
-
-	
 def setTLCvalue(data,DCMode):
 
 	# put the chip into DC mode	
 	GPIO.output(VPRG, DCMode)
 	
-	spi.xfer2(data)
+	print spi.xfer2(data)
 
 	# latch data
 	GPIO.output(XLAT, GPIO.HIGH)
@@ -74,6 +77,7 @@ def setTLCvalue(data,DCMode):
 
 
 def resetTLC():
+	# resets the chip to its default state
 	setTLCvalue([255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255],regPWM)
 	setTLCvalue([255,255,255,255,255,255,255,255,255,255,255,255],regDC)	
 
@@ -81,9 +85,14 @@ def resetTLC():
 if __name__ == "__main__":
 
 	resetTLC()
+	import math
 
-	for val in range(0, 63):
+	i=0
+	# pulsate by changeing brightness
+	while(1):
+		val = int(63*(math.sin(float(i))+1)/2)
+		i+=0.1
 		print val
-		setTLCvalue(buildvalue([val,val,val,val,val,val,val,val,val,val,val,val,val,val,val,val]),regDC)	
-		time.sleep(0.5)
+		setTLCvalue(buildvalue([val,val,val,val,val,val,val,val,val,val,val,val,val,val,val,val],regDC),regDC)	
+		time.sleep(0.1)
 
