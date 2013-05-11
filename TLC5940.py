@@ -102,7 +102,7 @@ def setTLCvalue(data,DCMode):
 
 def resetTLC():
 	# resets the chip to its default state
-	setTLCvalue([255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255],regPWM)
+	setTLCvalue([255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255],regPWM)
 	setTLCvalue([255,255,255,255,255,255,255,255,255,255,255,255],regDC)	
 
 
