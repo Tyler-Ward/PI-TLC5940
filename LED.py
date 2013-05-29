@@ -43,13 +43,55 @@ def blink(settings):
 	else:
 		return settings[3]
 
+def hueblend(settings):
+	#settings=(period,offset,brightness,colour(r=1,g=2,b=3))
+	# colour acts as angle offset
+
+	if settings[3] == 1:
+		coloffset = 0
+	elif settings[3] == 2:
+		coloffset = 120
+	elif settings[3] == 3:
+		coloffset = 240
+
+
+	progress = (int(millis())+settings[1]) % settings[0]
+	deg = (float(progress) / float(settings[0]) * float(360) + float(coloffset))%360
+	#print deg
+
+	# create blends
+	if deg < 60:
+    		val=settings[2]
+   	elif ((deg >= 60) and (deg < 120)):
+		val=settings[2] - (((deg - 60) * settings[2])/60) #drops
+	elif ((deg >= 120) and (deg < 240)):
+		val=0
+	elif ((deg >= 240) and (deg < 300)):
+		val=((deg - 240) * settings[2])/60 # rises
+	elif (deg >= 300):
+		val=settings[2] 
+
+	return int(val)
+
+
 def off(settings):
 	return 0
-	
 
+def constant(settings):
+	return settings[0]
+	
 Brightness=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-ledmode=[blink,blink,breathe,off,off,off,off,breathe,off,off,off,off,off,off,off,off]
-ledsettings=[(10000,5000,0,4000),(10000,5000,5000,4000),(10000,4000),(0),(0),(0),(0),(5000,4000),(0),(0),(0),(0),(0),(0),(0),(0)]
+ledmode=[hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,off]
+
+ledsettings=[(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(0)]
+
+
+#Brightness=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+#ledmode=[hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,off,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,off,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,off]
+
+#ledsettings=[(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(0),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(0),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(0)]
+
+
 
 
 if __name__ == "__main__":
@@ -61,6 +103,7 @@ if __name__ == "__main__":
 		for i in range(len(ledmode)):
 			Brightness[i]=ledmode[i](ledsettings[i])
 		TLC5940.setTLCvalue(TLC5940.buildvalue(Brightness,TLC5940.regPWM),TLC5940.regPWM)
+#		time.sleep(0.25)
 
 	
 

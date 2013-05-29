@@ -25,7 +25,7 @@ GPIO.setup(GSCLK, GPIO.OUT)
 #spi = spidev.SpiDev()
 #spi.open(0,0)
 
-spi.openSPI(speed=500000)
+spi.openSPI(speed=25000)
 
 #constants
 
@@ -89,12 +89,12 @@ def setTLCvalue(data,DCMode):
 
 	# put the chip into DC mode	
 	GPIO.output(VPRG, DCMode)
-	
-	print spi.transfer(tuple(data))
+	#print tuple(data)
+	spi.transfer(tuple(data))
 
 	# latch data
 	GPIO.output(XLAT, GPIO.HIGH)
-	#time.sleep(0.025)
+	#time.sleep(0.25)
 	GPIO.output(XLAT, GPIO.LOW)
 
 	GPIO.output(VPRG, GPIO.LOW)
@@ -102,8 +102,8 @@ def setTLCvalue(data,DCMode):
 
 def resetTLC():
 	# resets the chip to its default state
-	setTLCvalue([255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255],regPWM)
-	setTLCvalue([255,255,255,255,255,255,255,255,255,255,255,255],regDC)	
+	setTLCvalue([255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255],regPWM)
+	setTLCvalue(buildvalue([33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33],regDC),regDC)	
 
 
 if __name__ == "__main__":
@@ -113,19 +113,19 @@ if __name__ == "__main__":
 	i=0
 	for val in range(0,4096,100):
 		print val
-		setTLCvalue(buildvalue([val,val,val,val,val,val,val,val,val,val,val,val,val,val,val,val],regPWM),regPWM)
+		setTLCvalue(buildvalue([0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0],regPWM),regPWM)
 		time.sleep(0.5)	
 
-	for val in range(4096):
-		print val
-		setTLCvalue(buildvalue([val,val,val,val,val,val,val,val],regPWM),regPWM)	
-		time.sleep(0.01)
+#	for val in range(4096):
+#		print val
+#		setTLCvalue(buildvalue([0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0],regPWM),regPWM)
+#		time.sleep(0.01)
 
 	# pulsate by changeing brightness
 	while(1):
 		val = int(4000*(math.sin(float(i))+1)/2)
 		i+=0.01
 		print val
-		setTLCvalue(buildvalue([val,val,val,val,val,val,val,val,val,val,val,val,val,val,val,val],regPWM),regPWM)	
+		setTLCvalue(buildvalue([0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0],regPWM),regPWM)
 		time.sleep(0.01)
 
