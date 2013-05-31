@@ -105,27 +105,40 @@ def resetTLC():
 	setTLCvalue([255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255],regPWM)
 	setTLCvalue(buildvalue([33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33,33],regDC),regDC)	
 
-
 if __name__ == "__main__":
 
 	resetTLC()
 	import math
-	i=0
-	for val in range(0,4096,100):
-		print val
-		setTLCvalue(buildvalue([0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0],regPWM),regPWM)
-		time.sleep(0.5)	
 
+	for id in range(0, 16*5, 1):
+		val = [0]*id + [4000] + [0]*(16*5 - id - 1)
+		print val
+		setTLCvalue(buildvalue(val, regPWM), regPWM)
+		time.sleep(0.5)
+	exit()
+
+#	i=0
+#	for val in range(0,4096,100):
+#		print val
+#		red=val
+#		green=val
+#		blue=val
+#		setTLCvalue(buildvalue([red,green,blue,red,green,blue,red,green,blue,red,green,blue,red,green,blue,0,red,green,blue,red,green,blue,red,green,blue,red,green,blue,red,green,blue,0,red,green,blue,red,green,blue,red,green,blue,red,green,blue,red,green,blue,0],regPWM),regPWM)
+#		time.sleep(0.5)	
+#	exit()
 #	for val in range(4096):
 #		print val
 #		setTLCvalue(buildvalue([0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0],regPWM),regPWM)
 #		time.sleep(0.01)
-
-	# pulsate by changeing brightness
-	while(1):
-		val = int(4000*(math.sin(float(i))+1)/2)
-		i+=0.01
-		print val
-		setTLCvalue(buildvalue([0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0,0,0,val,0,0,val,0,0,val,0,0,val,0,0,val,0],regPWM),regPWM)
-		time.sleep(0.01)
+#
+#	# pulsate by changeing brightness
+#	while(1):
+#		val = int(4000*(math.sin(float(i))+1)/2)
+#		i+=0.01
+#		print val
+#		red=val
+#		green=val
+#		blue=val
+#		setTLCvalue(buildvalue([red,green,blue,red,green,blue,red,green,blue,red,green,blue,red,green,blue,0,red,green,blue,red,green,blue,red,green,blue,red,green,blue,red,green,blue,0,red,green,blue,red,green,blue,red,green,blue,red,green,blue,red,green,blue,0],regPWM),regPWM)
+#		time.sleep(0.01)
 
