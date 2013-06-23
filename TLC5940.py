@@ -114,7 +114,7 @@ if __name__ == "__main__":
 		val = [0]*id + [4000] + [0]*(16*5 - id - 1)
 		print val
 		setTLCvalue(buildvalue(val, regPWM), regPWM)
-		time.sleep(0.5)
+		time.sleep(5)
 	exit()
 
 #	i=0

@@ -80,19 +80,23 @@ def off(settings):
 def constant(settings):
 	return settings[0]
 	
-Brightness=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-ledmode=[hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,off]
+#Brightness=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+#ledmode=[hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,off]
 
-ledsettings=[(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(0)]
+#ledsettings=[(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(0)]
 
+count=5
 
-#Brightness=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-#ledmode=[hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,off,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,off,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,off]
-
-#ledsettings=[(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(0),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(0),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(0)]
-
-
-
+Brightness=[0]*16*count
+print Brightness
+tempmode=[hueblend]*15
+tempmode.append(off)
+ledmode=tempmode*count
+print ledmode
+ledsettings=[(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3)]*5
+ledsettings.append(0)
+ledsettings=ledsettings*count
+print ledsettings
 
 if __name__ == "__main__":
 	import TLC5940
