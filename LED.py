@@ -1,32 +1,19 @@
 #!/usr/bin/python
 
-LEDLocation= {}
-LEDLocation["R-1"] = 7
-LEDLocation["R0"] = 15
-LEDLocation["R1"] = 0
-LEDLocation["R2"] = 1
-LEDLocation["R3"] = 2
-LEDLocation["R4"] = 3
-LEDLocation["R5"] = 4
-LEDLocation["R6"] = 5
-LEDLocation["R7"] = 6
-
-LEDLocation["R8"] = 9
-LEDLocation["R9"] = 10
-
-LEDLocation["Y0"] = 7
-LEDLocation["Y1"] = 8
-LEDLocation["Y3"] = 11
-
 import datetime
 import math
+import thread
+import TLC5940
 
 def millis():
    dt = datetime.datetime.now()
    ms = (dt.second) * 1000 + dt.microsecond / 1000.0
    return ms
 
+
+######################################
 # led functions
+######################################
 
 def breathe(settings):
 	#settings=(period,brightness)
@@ -79,51 +66,88 @@ def off(settings):
 
 def constant(settings):
 	return settings[0]
-	
-#Brightness=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-#ledmode=[hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,hueblend,off]
 
-#ledsettings=[(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3),(0)]
+###################################
+# led mode mixers
+###################################
 
-count=5
+def setmixer(ledid,newmode,newmodesettings,mixer,mixersettings):
+	oldmode=ledmode[ledid]
+	oldsettings=ledsettings[ledid]
+	ledmode[ledid]=mixer
+	ledsettings[ledid]=(oldmode,oldsettings,newmode,(newmodesettings),(mixersettings),ledid)
 
-Brightness=[0]*16*count
-print Brightness
-tempmode=[hueblend]*15
-tempmode.append(off)
-ledmode=tempmode*count
-print ledmode
-ledsettings=[(10000,0,4000,1),(10000,0,4000,2),(10000,0,4000,3)]*5
-ledsettings.append(0)
-ledsettings=ledsettings*count
-print ledsettings
+def clearmixer(ledid,new):
+	print "clearing " + str(ledid)
+	if new==1:
+		ledmode[ledid]=ledsettings[ledid][2]
+		ledsettings[ledid]=ledsettings[ledid][3]
+	else:
+		ledmode[ledid]=ledsettings[ledid][0]
+		ledsettings[ledid]=ledsettings[ledid][1]
 
-if __name__ == "__main__":
-	import TLC5940
-	import time
-	TLC5940.resetTLC()
+def pulse(settings):
+	#settings(mode0,mode0settings,mode1,mode1settings,pulsesettings,ledid)
+	#pulsesettings(endtime)
 
+	now=millis()
+	if now >= settings[4][0]:
+		clearmixer(settings[5],0)
+		return settings[0](settings[1])
+	else:
+		return settings[2](settings[3])
+
+def modeblend(settings):
+	#settings(mode0,mode0settings,mode1,mode1settings,blendsettings,ledid)
+	#blendsettings(starttime,endtime)
+
+	now=millis()
+	if now <= settings[4][0]:
+		return settings[0](settings[1])
+	else:
+		if now >= settings[4][1]:	
+			clearmixer(settings[5],1)
+			return settings[2](settings[3])
+		else:
+			progress=(now-settings[4][0])/(settings[4][1]-settings[4][0])
+			outgoing=(1-progress)*settings[0](settings[1])
+			incoming=progress*settings[2](settings[3])
+			return int(outgoing+incoming)
+
+
+
+###################################
+# led processing commands
+###################################
+
+def startledcontroler():
+	thread.start_new_thread(ledcontroler,())
+
+def ledcontroler():
 	while(1):
 		for i in range(len(ledmode)):
 			Brightness[i]=ledmode[i](ledsettings[i])
 		TLC5940.setTLCvalue(TLC5940.buildvalue(Brightness,TLC5940.regPWM),TLC5940.regPWM)
-#		time.sleep(0.25)
 
+####################################
+# default values
+####################################
+
+Brightness=[]
+ledmode=[]
+ledsettings=[]
+
+
+if __name__ == "__main__":
+	# run a simple test of breathe animation
+	import time
+	TLC5940.resetTLC()
 	
-
-
-	#ledfunc=[("R1",3000,1),("R2",3000,0.01),("R1",0,1),("R3",3000,0.01),("R2",0,1),("R3",0,5)]
-	#ledfunc=[]
-	#for led in range(5):
-	#	#ledfunc=[("R0",3000),("R1",3000),("R0",0)]
-	#	ledfunc.append(("R"+str(led),3000,1))
-	#	ledfunc.append(("R"+str(led-1),0,1))
-	#while(1):
-	#	for led in range(len(ledfunc)):
-	#		loc=ledfunc[led][0]
-	#		Brightness[LEDLocation[loc]]=ledfunc[led][1]
-	#		time.sleep(ledfunc[led][2])
-	#		TLC5940.setTLCvalue(TLC5940.buildvalue(Brightness,TLC5940.regPWM),TLC5940.regPWM)
-	#
-	#	print "done"
+	Brightness=[0]*16
+	ledmode=[breathe]*16
+	ledsettings=[(10000,3000)]*16	
 	
+	startledcontroler()
+	time.sleep(20)
+	ledsettings=[(2000,3000)]*16
+	time.sleep(1000)
