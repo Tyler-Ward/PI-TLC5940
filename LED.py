@@ -2,8 +2,10 @@
 
 import datetime
 import math
-import thread
+#import thread
 import TLC5940
+from multiprocessing import Process, Queue, Manager
+import time
 
 def millis():
    dt = datetime.datetime.now()
@@ -15,139 +17,151 @@ def millis():
 # led functions
 ######################################
 
-def breathe(settings):
-	#settings=(period,brightness)
-	rate=2*math.pi/settings[0]
-	return int(settings[1]*(math.sin(float(millis()*rate))+1)/2)
+def breathe(period,brightness, *other, **kwargs):
+	rate=2*math.pi/period
+	return int(brightness*(math.sin(float(millis()*rate))+1)/2)
 
 
-def blink(settings):
-	#settings=(period,ontime,offset,brightness)
-
-	blinkprogress = (int(millis())+settings[2]) % settings[0]
-	if blinkprogress >= settings[1]:
+def blink(period,ontime,offset,brightness, *other, **kwargs):
+	blinkprogress = (int(millis())+offset) % period 
+	if blinkprogress >= ontime:
 		return 0
 	else:
-		return settings[3]
+		return brightness
 
-def hueblend(settings):
-	#settings=(period,offset,brightness,colour(r=1,g=2,b=3))
+def hueblend(period,offset,brightness,colour, *other, **kwargs):
 	# colour acts as angle offset
 
-	if settings[3] == 1:
+	if colour == 1:
 		coloffset = 0
-	elif settings[3] == 2:
+	elif colour == 2:
 		coloffset = 120
-	elif settings[3] == 3:
+	elif colour == 3:
 		coloffset = 240
 
 
-	progress = (int(millis())+settings[1]) % settings[0]
-	deg = (float(progress) / float(settings[0]) * float(360) + float(coloffset))%360
+	progress = (int(millis())+offset) % period 
+	deg = (float(progress) / float(period) * float(360) + float(coloffset))%360
 	#print deg
 
 	# create blends
 	if deg < 60:
-    		val=settings[2]
-   	elif ((deg >= 60) and (deg < 120)):
-		val=settings[2] - (((deg - 60) * settings[2])/60) #drops
+		val=brightness
+	elif ((deg >= 60) and (deg < 120)):
+		val=brightness - (((deg - 60) * brightness)/60) #drops
 	elif ((deg >= 120) and (deg < 240)):
 		val=0
 	elif ((deg >= 240) and (deg < 300)):
-		val=((deg - 240) * settings[2])/60 # rises
+		val=((deg - 240) * brightness)/60 # rises
 	elif (deg >= 300):
-		val=settings[2] 
+		val=brightness
 
 	return int(val)
 
 
-def off(settings):
+def off(*other, **kwargs):
 	return 0
 
-def constant(settings):
-	return settings[0]
+def constant(value, *other, **kwargs):
+	return value 
 
 ###################################
 # led mode mixers
 ###################################
 
-def setmixer(ledid,newmode,newmodesettings,mixer,mixersettings):
-	oldmode=ledmode[ledid]
-	oldsettings=ledsettings[ledid]
-	ledmode[ledid]=mixer
-	ledsettings[ledid]=(oldmode,oldsettings,newmode,(newmodesettings),(mixersettings),ledid)
 
-def clearmixer(ledid,new):
-	print "clearing " + str(ledid)
-	if new==1:
-		ledmode[ledid]=ledsettings[ledid][2]
-		ledsettings[ledid]=ledsettings[ledid][3]
+	
+def pulse(mode0,mode0settings,mode1,mode1settings,pulsesettings,ledid, instance, *other):
+	endtime = pulsesettings[0]
+	now=millis()
+	if now >= endtime: 
+		instance.clearmixer(ledid,0)
+		return mode0(*mode0settings, instance=instance)
 	else:
-		ledmode[ledid]=ledsettings[ledid][0]
-		ledsettings[ledid]=ledsettings[ledid][1]
+		return mode1(*mode1settings, instance=instance)
 
-def pulse(settings):
-	#settings(mode0,mode0settings,mode1,mode1settings,pulsesettings,ledid)
-	#pulsesettings(endtime)
+def modeblend(mode0,mode0settings,mode1,mode1settings,blendsettings,ledid, instance, *other):
+	starttime = blendsettings[0]
+	endtime = blendsettings[1]
 
 	now=millis()
-	if now >= settings[4][0]:
-		clearmixer(settings[5],0)
-		return settings[0](settings[1])
+	if now <= starttime:
+		return mode0(*mode0settings, instance=instance)
 	else:
-		return settings[2](settings[3])
-
-def modeblend(settings):
-	#settings(mode0,mode0settings,mode1,mode1settings,blendsettings,ledid)
-	#blendsettings(starttime,endtime)
-
-	now=millis()
-	if now <= settings[4][0]:
-		return settings[0](settings[1])
-	else:
-		if now >= settings[4][1]:	
-			clearmixer(settings[5],1)
-			return settings[2](settings[3])
+		if now >= endtime:
+			instance.clearmixer(ledid,1)
+			return mode1(*mode1settings, instance=instance)
 		else:
-			progress=(now-settings[4][0])/(settings[4][1]-settings[4][0])
-			outgoing=(1-progress)*settings[0](settings[1])
-			incoming=progress*settings[2](settings[3])
+			progress=(now-starttime)/(endtime-starttime)
+			outgoing=(1-progress)*mode0(*mode0settings, instance=instance)
+			incoming=progress*mode1(*mode1settings, instance=instance)
 			return int(outgoing+incoming)
 
+class LEDController:
+
+	###################################
+	# mixer mode helpers
+	###################################
+
+	def setmixer(self,ledid,newmode,newmodesettings,mixer,mixersettings):
+		oldmode=self.mode[ledid]
+		oldsettings=self.settings[ledid]
+		self.mode[ledid]=mixer
+		self.settings[ledid]=(oldmode,oldsettings,newmode,(newmodesettings),(mixersettings),ledid)
+	
+	def setmodemixer(self,data,mixer,mixersettings):
+		for i in range(len(self.settings)):
+			self.setmixer(i,data[0][i],data[1][i],mixer,mixersettings)
+		self.setconfig(self.mode, self.settings)
+
+	def clearmixer(self,ledid,new):
+		if new==1:
+			self.mode[ledid]=self.settings[ledid][2]
+			self.settings[ledid]=self.settings[ledid][3]
+		else:
+			self.mode[ledid]=self.settings[ledid][0]
+			self.settings[ledid]=self.settings[ledid][1]
+		self.setconfig(self.mode, self.settings)
 
 
-###################################
-# led processing commands
-###################################
+	###################################
+	# led processing commands
+	###################################
 
-def startledcontroler():
-	thread.start_new_thread(ledcontroler,())
+	def __init__(self, count):
+		self.count = count
+		self.brightness = [0]*16*count
+		self.mode = [off]*16*count
+		self.settings = [(0,)]*16*count
+		self.queue = Queue()
 
-def ledcontroler():
-	while(1):
-		for i in range(len(ledmode)):
-			Brightness[i]=ledmode[i](ledsettings[i])
-		TLC5940.setTLCvalue(TLC5940.buildvalue(Brightness,TLC5940.regPWM),TLC5940.regPWM)
+	def setconfig(self, mode, settings):
+		self.settings = settings
+		self.mode = mode
+		#print self.mode
+		#print self.settings
+		self.queue.put([mode, settings])
 
-####################################
-# default values
-####################################
+	def startledcontroler(self):
+		p = Process(target=self.ledcontroler,args=(self.queue,))
+		p.daemon = True
+		p.start()
 
-Brightness=[]
-ledmode=[]
-ledsettings=[]
 
+	def setmode(self, data):
+		print "use of depricated setmode"
+		self.setconfig(data[0], data[1])
+
+
+	def ledcontroler(self, queue):
+		while(1):
+			while not queue.empty():
+				(self.mode, self.settings) = self.queue.get()
+			for i in range(len(self.settings)):
+				self.brightness[i]=self.mode[i](*(self.settings[i]), instance=self)
+			TLC5940.setTLCvalue(TLC5940.buildvalue(self.brightness,TLC5940.regPWM),TLC5940.regPWM)
 
 if __name__ == "__main__":
 	# run a simple test of breathe animation
-	import time
-	TLC5940.resetTLC()
 	
-	Brightness=[0]*16
-	ledmode=[breathe]*16
-	ledsettings=[(10000,3000)]*16	
-	
-	startledcontroler()
-	time.sleep(20)
-	ledsettings=[(2000,3000)]*16
-	time.sleep(1000)
+	print "test where out of date and have been removed"
