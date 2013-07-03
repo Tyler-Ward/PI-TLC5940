@@ -17,7 +17,7 @@ def millis():
 # led functions
 ######################################
 
-def breathe(period, maxbrightness, minbrightness=0, offset=0  *other, **kwargs):
+def breathe(period, maxbrightness, minbrightness=0, offset=0,  *other, **kwargs):
 	rate=2*math.pi/period
 	brightness=maxbrightness-minbrightness
 	return int((brightness*(math.sin(float(millis()*rate)-offset)+1)/2)+minbrightness)
