@@ -17,13 +17,14 @@ def millis():
 # led functions
 ######################################
 
-def breathe(period,brightness, *other, **kwargs):
+def breathe(period, maxbrightness, minbrightness=0, offset=0  *other, **kwargs):
 	rate=2*math.pi/period
-	return int(brightness*(math.sin(float(millis()*rate))+1)/2)
+	brightness=maxbrightness-minbrightness
+	return int((brightness*(math.sin(float(millis()*rate)-offset)+1)/2)+minbrightness)
 
 
 def blink(period,ontime,offset,brightness, *other, **kwargs):
-	blinkprogress = (int(millis())+offset) % period 
+	blinkprogress = (int(millis())-offset) % period 
 	if blinkprogress >= ontime:
 		return 0
 	else:
