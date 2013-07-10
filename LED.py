@@ -155,6 +155,7 @@ class LEDController:
 
 
 	def ledcontroler(self, queue):
+		TLC5940.resetTLC()
 		while(1):
 			while not queue.empty():
 				(self.mode, self.settings) = self.queue.get()
